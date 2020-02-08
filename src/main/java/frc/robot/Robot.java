@@ -84,21 +84,23 @@ public class Robot extends TimedRobot {
         // Initialize period, move intake back a smidge
         intake_speed = -0.25;
       } else {
-        intake_speed = 0;
+        intake_speed = 0.5;
       }
       m_intake.set(intake_speed);
 
       double speed = 0.75;
       // NOTE: May need to make speed negative if shooter spins in opposite direction
       m_shooter.arcadeDrive(speed, 0);
+
+      if( m_timer.get() > 3.0 ) {
+        m_isShooting = false;
+        m_intake.set(0);
+        m_timer.stop();
+        m_timer.reset();
+      }
+      
     } else {
       m_shooter.arcadeDrive(0, 0);
-    }
-
-    if( m_timer.get() > 3.0 ) {
-      m_isShooting = false;
-      m_timer.stop();
-      m_timer.reset();
     }
   }
 }
