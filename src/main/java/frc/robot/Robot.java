@@ -7,10 +7,10 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 /**
@@ -38,11 +38,14 @@ public class Robot extends TimedRobot {
   private final DifferentialDrive m_robotDrive = new DifferentialDrive(m_leftMotor, m_rightMotor);
   private final DifferentialDrive m_shooter = new DifferentialDrive(m_shooter_right, m_shooter_left);
   private final Joystick m_cStick = new Joystick(0);
+  private boolean m_isShooting;
+  private Timer m_timer = new Timer();
 
   @Override
   public void robotInit() {
     System.out.println("Robot Init");
     super.robotInit();
+    m_isShooting = false;
   }
 
   @Override
@@ -51,10 +54,51 @@ public class Robot extends TimedRobot {
     // That means that the Y axis drives forward
     // and backward, and the X turns left and right.
     m_robotDrive.arcadeDrive(m_cStick.getY(), m_cStick.getX());
-    m_shooter.arcadeDrive(0, 0);
+
+    shoot();
+    
+    if(m_cStick.getRawButton(BUTTON_B)) {
+      double speed = 0.5;
+      m_intake.set(speed);
+    } else {
+      m_intake.set(0);
+    }
+
   }
 
   @Override
       public void autonomousPeriodic() {
+        // TODO: Add code here for autonomous mode
+  }
+
+  public void shoot()
+  {
+    if( m_cStick.getRawButton(BUTTON_A) && !m_isShooting ) {
+      m_isShooting = true;
+      m_timer.start();
+    }
+
+    if( m_isShooting ) {
+      double intake_speed = 0;
+      if( m_timer.get() < 0.25 ) {
+        // Initialize period, move intake back a smidge
+        intake_speed = -0.25;
+      } else {
+        intake_speed = 0;
+      }
+      m_intake.set(intake_speed);
+
+      double speed = 0.75;
+      // NOTE: May need to make speed negative if shooter spins in opposite direction
+      m_shooter.arcadeDrive(speed, 0);
+    } else {
+      m_shooter.arcadeDrive(0, 0);
+    }
+
+    if( m_timer.get() > 3.0 ) {
+      m_isShooting = false;
+      m_timer.stop();
+      m_timer.reset();
+    }
   }
 }
